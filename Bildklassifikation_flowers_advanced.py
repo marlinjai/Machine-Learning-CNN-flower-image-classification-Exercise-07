@@ -3,6 +3,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers # type: ignore
 from tensorflow.keras.models import Sequential # type: ignore
+from tensorflow.keras.layers import Input  # type: ignore
 
 # Helper libraries
 import matplotlib.pyplot as plt
@@ -73,7 +74,9 @@ print(np.min(first_image), np.max(first_image))
 
 
 data_augmentation = keras.Sequential(
+  
   [
+    Input(shape=(img_height, img_width, 3)),  # Define input shape here
     layers.RandomFlip("horizontal", input_shape=(img_height, img_width, 3)),
     layers.RandomRotation(0.1),
     layers.RandomZoom(0.1),
@@ -84,11 +87,15 @@ data_augmentation = keras.Sequential(
 num_classes = 5
 
 model = Sequential([
-  tf.keras.layers.Rescaling(1./255, input_shape=(img_height, img_width, 3)),
+  Input(shape=(img_height, img_width, 3)),  # Define input shape here
+  data_augmentation,
+  tf.keras.layers.Rescaling(1./255),
   layers.Conv2D(16, 3, padding='same', activation='relu'),
   layers.MaxPooling2D(),
+  layers.Dropout(0.5),
   layers.Conv2D(32, 3, padding='same', activation='relu'),
   layers.MaxPooling2D(),
+  layers.Dropout(0.5),
   layers.Conv2D(64, 3, padding='same', activation='relu'),
   layers.MaxPooling2D(),
   layers.Dropout(0.5),
@@ -115,7 +122,7 @@ model.compile(optimizer='adam',
 model.summary()
 
 # Trainieren des Modells
-epochs=25
+epochs=15
 history = model.fit(
   train_ds,
   validation_data=val_ds,
